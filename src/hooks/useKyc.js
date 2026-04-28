@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { getKycList, reviewKyc } from '../services/api'
 
 export function useKyc() {
@@ -15,6 +15,11 @@ export function useKyc() {
       setLoading(false)
     }
   }, [kycTab])
+
+  // ✅ ໂຫລດອັດຕະໂນມັດທຸກຄັ້ງທີ່ kycTab ປ່ຽນ
+  useEffect(() => {
+    fetchKyc()
+  }, [fetchKyc])
 
   const handleReview = async (userId, status, note) => {
     await reviewKyc(userId, status, note)

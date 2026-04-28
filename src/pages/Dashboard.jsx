@@ -13,9 +13,8 @@ import { usePermission } from '../hooks/usePermission'
 import { useTheme }      from '../context/useTheme'
 
 export default function Dashboard() {
-  // ✅ ທຸກ hooks ຢູ່ເທິງ — ກ່ອນ return
-  const { theme }        = useTheme()
-  const { can }          = usePermission()
+  const { theme } = useTheme()
+  const { can }   = usePermission()
 
   const [mainTab,  setMainTab]  = useState(can.viewKYC ? 'kyc' : 'rate')
   const [selected, setSelected] = useState(null)
@@ -31,13 +30,11 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  // ✅ ສະເພາະ users ແລະ rate — KYC ຈັດການໃນ useKyc ແລ້ວ
   useEffect(() => {
-    if (mainTab === 'kyc')   fetchKyc()
     if (mainTab === 'users') fetchUsers()
     if (mainTab === 'rate')  fetchRate()
-  }, [mainTab, fetchKyc, fetchUsers, fetchRate])
-
-  useEffect(() => { fetchKyc() }, [kycTab, fetchKyc])
+  }, [mainTab, fetchUsers, fetchRate])
 
   const onReview = async (status) => {
     try {
@@ -69,14 +66,13 @@ export default function Dashboard() {
     }
   }
 
-  // ✅ return ດຽວ — ຢູ່ທ້າຍ
   return (
     <div style={{
-        minHeight:  '100vh',
-        background: theme.bg,
-        color:      theme.text,
-        fontFamily: 'Sora, sans-serif',
-        transition: 'background 0.3s, color 0.3s',
+      minHeight:  '100vh',
+      background: theme.bg,
+      color:      theme.text,
+      fontFamily: 'Sora, sans-serif',
+      transition: 'background 0.3s, color 0.3s',
     }}>
       <Toast toast={toast} />
       <Header mainTab={mainTab} setMainTab={setMainTab} />
@@ -87,7 +83,7 @@ export default function Dashboard() {
           <>
             <KycStats kycTab={kycTab} setKycTab={setKycTab} count={kycList.length} />
             <KycTable
-              kycTab={kycTab}   kycList={kycList}
+              kycTab={kycTab}      kycList={kycList}
               loading={kycLoading} onRefresh={fetchKyc}
               onSelect={(kyc) => { setSelected(kyc); setNote('') }}
             />
@@ -96,7 +92,7 @@ export default function Dashboard() {
 
         {mainTab === 'users' && can.viewUsers && (
           <UsersTable
-            users={users}        loading={usersLoading}
+            users={users}           loading={usersLoading}
             onRefresh={fetchUsers}
             onRoleChange={onRoleChange}
             onDelete={onDelete}
@@ -105,7 +101,7 @@ export default function Dashboard() {
 
         {mainTab === 'rate' && can.viewRate && (
           <RatePanel
-            rate={rate}   stats={stats}
+            rate={rate}    stats={stats}
             loading={rateLoading} onRefresh={fetchRate}
           />
         )}
