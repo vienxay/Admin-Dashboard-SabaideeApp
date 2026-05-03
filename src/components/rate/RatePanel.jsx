@@ -1,8 +1,9 @@
+import { useState, useEffect, useRef } from 'react' // ✅ ເພີ່ມ useRef
 import { useTheme } from '../../context/useTheme'
+import api from '../../services/api'
 
 const fmtNum = (n) => Number(n || 0).toLocaleString()
 
-// ✅ ສີສຳລັບແຕ່ລະ card
 const STATS_CONFIG = [
   { key: 'totalUsers', label: 'Users ທັງໝົດ', icon: '👥',
     accent: '#6366f1', light: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.2)' },
@@ -15,16 +16,44 @@ const STATS_CONFIG = [
 ]
 
 const RATE_CONFIG = [
-  { label: '1 BTC = USD', key: 'btcUSD', accent: '#f59e0b', light: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.15)' },
-  { label: '1 BTC = LAK', key: 'btcLAK', accent: '#00d4aa', light: 'rgba(0,212,170,0.06)',  border: 'rgba(0,212,170,0.15)'  },
-  { label: '1 USD = LAK', key: 'usdLAK', accent: '#a78bfa', light: 'rgba(167,139,250,0.06)',border: 'rgba(167,139,250,0.15)'},
-  { label: '1 sat = LAK', key: 'satLAK', accent: '#00d4aa', light: 'rgba(0,212,170,0.06)',  border: 'rgba(0,212,170,0.15)'  },
-  { label: '1,000 sats',  key: 'kSats',  accent: '#f59e0b', light: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.15)' },
-  { label: '⏰ Updated',   key: 'time',   accent: '#64748b', light: 'rgba(100,116,139,0.06)',border: 'rgba(100,116,139,0.15)'},
+  { label: '1 BTC = USD', key: 'btcUSD', accent: '#f59e0b', light: 'rgba(245,158,11,0.06)',  border: 'rgba(245,158,11,0.15)'  },
+  { label: '1 BTC = LAK', key: 'btcLAK', accent: '#00d4aa', light: 'rgba(0,212,170,0.06)',   border: 'rgba(0,212,170,0.15)'   },
+  { label: '1 USD = LAK', key: 'usdLAK', accent: '#a78bfa', light: 'rgba(167,139,250,0.06)', border: 'rgba(167,139,250,0.15)' },
+  { label: '1 sat = LAK', key: 'satLAK', accent: '#00d4aa', light: 'rgba(0,212,170,0.06)',   border: 'rgba(0,212,170,0.15)'   },
+  { label: '1,000 sats',  key: 'kSats',  accent: '#f59e0b', light: 'rgba(245,158,11,0.06)',  border: 'rgba(245,158,11,0.15)'  },
+  { label: '⏰ Updated',   key: 'time',   accent: '#64748b', light: 'rgba(100,116,139,0.06)', border: 'rgba(100,116,139,0.15)' },
 ]
 
 export function RatePanel({ rate, stats, loading, onRefresh }) {
-  const { theme } = useTheme()
+  const { theme }   = useTheme()
+  const inputRef    = useRef(null)       // ✅ ໃຊ້ ref
+  const [updating,  setUpdating] = useState(false)
+  const [msg,       setMsg]      = useState(null)
+
+  // ✅ sync ຄ່າ input ຈາກ DB — ສະເພາະຕອນ rate ປ່ຽນ ແລະ user ບໍ່ focus
+  useEffect(() => {
+    if (rate?.usdToLAK && inputRef.current && document.activeElement !== inputRef.current) {
+      inputRef.current.value = String(Math.round(rate.usdToLAK))
+    }
+  }, [rate])
+
+  const handleUpdate = async () => {
+    const val = parseFloat(inputRef.current?.value) // ✅ ດຶງຈາກ ref ໂດຍກົງ
+    if (!val || val <= 0) {
+      setMsg({ ok: false, text: 'ໃສ່ຕົວເລກທີ່ຖືກຕ້ອງ' })
+      return
+    }
+    setUpdating(true); setMsg(null)
+    try {
+      await api.post('/admin/rate/update', { usdToLAK: val })
+      setMsg({ ok: true, text: '✅ ອັບເດດ Rate ສຳເລັດ' })
+      onRefresh()
+    } catch {
+      setMsg({ ok: false, text: '❌ ອັບເດດບໍ່ສຳເລັດ' })
+    } finally {
+      setUpdating(false)
+    }
+  }
 
   const statsValues = stats ? {
     totalUsers: fmtNum(stats.totalUsers),
@@ -51,7 +80,7 @@ export function RatePanel({ rate, stats, loading, onRefresh }) {
 
   return (
     <>
-      {/* Stats Cards */}
+      {/* ── Stats Cards ── */}
       {stats && (
         <div style={{
           display: 'grid',
@@ -66,19 +95,14 @@ export function RatePanel({ rate, stats, loading, onRefresh }) {
               style={{
                 ...cardBase,
                 background: theme.name === 'light' ? cfg.light : theme.surface,
-                border:     `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
-                boxShadow:  theme.name === 'light'
-                  ? `0 2px 12px ${cfg.border}`
-                  : 'none',
+                border: `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
+                boxShadow: theme.name === 'light' ? `0 2px 12px ${cfg.border}` : 'none',
               }}>
-              {/* ✅ Icon box ສີຕາມ accent */}
               <div style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 width: '36px', height: '36px', borderRadius: '10px', fontSize: '16px',
-                background: `${cfg.accent}18`,
-                marginBottom: '12px',
+                background: `${cfg.accent}18`, marginBottom: '12px',
               }}>{cfg.icon}</div>
-
               <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '4px' }}>
                 {cfg.label}
               </div>
@@ -90,15 +114,14 @@ export function RatePanel({ rate, stats, loading, onRefresh }) {
         </div>
       )}
 
-      {/* Rate Card */}
+      {/* ── Rate Card ── */}
       <div style={{
-        background:   theme.surface,
-        border:      `1px solid ${theme.border}`,
+        background: theme.surface,
+        border: `1px solid ${theme.border}`,
         borderRadius: '16px',
-        overflow:     'hidden',
+        overflow: 'hidden',
         boxShadow: theme.name === 'light' ? '0 2px 12px rgba(99,115,150,0.1)' : 'none',
       }}>
-        {/* Header */}
         <div style={{
           padding: '18px 24px',
           borderBottom: `1px solid ${theme.border}`,
@@ -143,18 +166,14 @@ export function RatePanel({ rate, stats, loading, onRefresh }) {
                 }}
                 style={{
                   ...cardBase,
-                  background:    theme.name === 'light' ? cfg.light : theme.surface2,
-                  // ✅ ແທນ border shorthand ດ້ວຍ 4 ດ້ານ
-                  borderTop:     `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
-                  borderRight:   `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
-                  borderBottom:  `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
-                  borderLeft:    `3px solid ${cfg.accent}`, // ✅ ຂໍ້ຄວາມສີດ້ານຊ້າຍ
-                  boxShadow:     theme.name === 'light' ? `0 1px 6px ${cfg.border}` : 'none',
+                  background: theme.name === 'light' ? cfg.light : theme.surface2,
+                  borderTop:    `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
+                  borderRight:  `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
+                  borderBottom: `1px solid ${theme.name === 'light' ? cfg.border : theme.border}`,
+                  borderLeft:   `3px solid ${cfg.accent}`,
+                  boxShadow: theme.name === 'light' ? `0 1px 6px ${cfg.border}` : 'none',
                 }}>
-                <div style={{
-                  fontSize: '12px', color: theme.textMuted,
-                  marginBottom: '10px', fontWeight: 500,
-                }}>
+                <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '10px', fontWeight: 500 }}>
                   {cfg.label}
                 </div>
                 <div style={{ fontSize: '20px', fontWeight: 700, color: cfg.accent }}>
@@ -168,6 +187,71 @@ export function RatePanel({ rate, stats, loading, onRefresh }) {
             ບໍ່ມີຂໍ້ມູນ Rate
           </div>
         )}
+      </div>
+
+      {/* ── Update Rate Form ── */}
+      <div style={{
+        background: theme.surface,
+        border: `1px solid ${theme.border}`,
+        borderRadius: '16px',
+        padding: '20px 24px',
+        marginTop: '16px',
+      }}>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: theme.text, marginBottom: '16px' }}>
+          ✏️ ແກ້ໄຂ USD → LAK
+        </div>
+
+        {msg && (
+          <div style={{
+            marginBottom: '12px', padding: '10px 14px',
+            borderRadius: '8px', fontSize: '13px',
+            background: msg.ok ? 'rgba(0,212,170,0.1)' : 'rgba(239,68,68,0.1)',
+            color: msg.ok ? '#00d4aa' : '#ef4444',
+            border: `1px solid ${msg.ok ? 'rgba(0,212,170,0.2)' : 'rgba(239,68,68,0.2)'}`,
+          }}>{msg.text}</div>
+        )}
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <span style={{
+              position: 'absolute', left: '14px', top: '50%',
+              transform: 'translateY(-50%)',
+              color: theme.textMuted, fontSize: '13px',
+            }}>1 USD =</span>
+            <input
+              ref={inputRef}        // ✅ ໃຊ້ ref
+              type="number"
+              defaultValue=""       // ✅ uncontrolled input
+              placeholder="21000"
+              style={{
+                width: '100%', padding: '12px 60px 12px 70px',
+                background: theme.surface2 || '#0d0d1a',
+                border: `1px solid ${theme.border}`,
+                borderRadius: '10px', color: theme.text,
+                fontSize: '15px', fontWeight: 600,
+                outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+            <span style={{
+              position: 'absolute', right: '14px', top: '50%',
+              transform: 'translateY(-50%)',
+              color: theme.textMuted, fontSize: '13px',
+            }}>ກີບ</span>
+          </div>
+          <button
+            onClick={handleUpdate}
+            disabled={updating}
+            style={{
+              padding: '12px 24px', borderRadius: '10px',
+              border: 'none',
+              background: updating ? 'rgba(0,212,170,0.4)' : '#00d4aa',
+              color: '#0d0d1a', fontWeight: 700, fontSize: '14px',
+              cursor: updating ? 'not-allowed' : 'pointer',
+              whiteSpace: 'nowrap',
+            }}>
+            {updating ? 'ກຳລັງອັບເດດ...' : '💱 ອັບເດດ Rate'}
+          </button>
+        </div>
       </div>
     </>
   )

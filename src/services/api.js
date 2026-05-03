@@ -85,7 +85,7 @@ export const setupAdmin    = (name, email, password)      => api.post('/admin/se
 export const createStaff   = (name, email, password)      => api.post('/admin/create-staff', { name, email, password })
 
 // ── Rate + Stats ──────────────────────────────────────────────────────────
-export const getRate  = () => api.get('/wallet/rate')
+export const getRate  = () => api.get('/admin/rate')
 export const getStats = () => api.get('/admin/stats')
 
 export default api

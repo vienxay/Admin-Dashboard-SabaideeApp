@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { getRate, getStats } from '../services/api'
 
 export function useRate() {
@@ -16,6 +16,11 @@ export function useRate() {
       setLoading(false)
     }
   }, [])
+
+  // ✅ ດຶງຄັ້ງດຽວຕອນ mount — ບໍ່ມີ auto-refresh
+  useEffect(() => {
+    fetchRate()
+  }, [fetchRate])
 
   return { rate, stats, loading, fetchRate }
 }

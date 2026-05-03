@@ -33,8 +33,7 @@ export default function Dashboard() {
   // ✅ ສະເພາະ users ແລະ rate — KYC ຈັດການໃນ useKyc ແລ້ວ
   useEffect(() => {
     if (mainTab === 'users') fetchUsers()
-    if (mainTab === 'rate')  fetchRate()
-  }, [mainTab, fetchUsers, fetchRate])
+  }, [mainTab, fetchUsers])
 
   const onReview = async (status) => {
     try {
