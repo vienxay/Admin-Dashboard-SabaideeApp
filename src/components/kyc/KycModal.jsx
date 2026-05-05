@@ -1,29 +1,28 @@
 import { useState } from 'react'
+import { useTheme } from '../../context/useTheme'  // ✅ ເພີ່ມ
 
 const TAB_LABEL = { pending: 'ລໍຖ້າ', verified: 'ຜ່ານແລ້ວ', rejected: 'ປະຕິເສດ' }
 
 export function KycModal({ selected, note, setNote, onClose, onReview }) {
   const [processing, setProcessing] = useState(false)
+  const { theme } = useTheme()  // ✅ ເພີ່ມ
   const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB') : '-'
 
   const handleReview = async (status) => {
     setProcessing(true)
-    try {
-      await onReview(status)
-    } finally {
-      setProcessing(false)
-    }
+    try { await onReview(status) }
+    finally { setProcessing(false) }
   }
 
   const INFO_ROWS = [
-    ['ຊື່ເຕັມ',          selected.fullName],
-    ['ເພດ',              selected.gender === 'M' ? '👨 ຊາຍ' : '👩 ຍິງ'],
-    ['ວັນເດືອນປີເກີດ',   fmtDate(selected.dob)],
-    ['ສັນຊາດ',           selected.nationality],
-    ['Email',            selected.email],
-    ['Passport No.',     selected.passportNumber],
-    ['ໝົດອາຍຸ',          fmtDate(selected.expiryDate)],
-    ['Ref ID',           selected.referenceId],
+    ['ຊື່ເຕັມ',        selected.fullName],
+    ['ເພດ',            selected.gender === 'M' ? '👨 ຊາຍ' : '👩 ຍິງ'],
+    ['ວັນເດືອນປີເກີດ', fmtDate(selected.dob)],
+    ['ສັນຊາດ',         selected.nationality],
+    ['Email',          selected.email],
+    ['Passport No.',   selected.passportNumber],
+    ['ໝົດອາຍຸ',        fmtDate(selected.expiryDate)],
+    ['Ref ID',         selected.referenceId],
   ]
 
   return (
@@ -35,19 +34,22 @@ export function KycModal({ selected, note, setNote, onClose, onReview }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
       }}>
       <div style={{
-        background: '#12122a', border: '1px solid rgba(255,255,255,0.1)',
+        background:   theme.surface,           // ✅
+        border:      `1px solid ${theme.border}`, // ✅
         borderRadius: '20px', width: '100%', maxWidth: '520px',
         maxHeight: '90vh', overflowY: 'auto',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+        boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
       }}>
         {/* Header */}
         <div style={{
-          padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          padding: '20px 24px', borderBottom: `1px solid ${theme.border}`, // ✅
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <span style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>ລາຍລະອຽດ KYC</span>
+          <span style={{ fontSize: '16px', fontWeight: 700, color: theme.text }}> // ✅
+            ລາຍລະອຽດ KYC
+          </span>
           <button onClick={onClose} style={{
-            background: 'none', border: 'none', color: '#475569',
+            background: 'none', border: 'none', color: theme.textMuted, // ✅
             fontSize: '20px', cursor: 'pointer', lineHeight: 1,
           }}>✕</button>
         </div>
@@ -56,12 +58,15 @@ export function KycModal({ selected, note, setNote, onClose, onReview }) {
           {/* Passport Image */}
           {selected.idFrontUrl && (
             <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '11px', color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{
+                fontSize: '11px', color: theme.textMuted, // ✅
+                marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em',
+              }}>
                 ຮູບ Passport
               </div>
               <img src={selected.idFrontUrl} alt="passport" style={{
                 width: '100%', borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.08)', display: 'block',
+                border: `1px solid ${theme.border}`, display: 'block', // ✅
               }} />
             </div>
           )}
@@ -70,13 +75,20 @@ export function KycModal({ selected, note, setNote, onClose, onReview }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
             {INFO_ROWS.map(([label, value]) => (
               <div key={label} style={{
-                background: '#0a0a14', borderRadius: '10px', padding: '12px 14px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                background:   theme.surface2,        // ✅
+                borderRadius: '10px', padding: '12px 14px',
+                border:      `1px solid ${theme.border}`, // ✅
               }}>
-                <div style={{ fontSize: '10px', color: '#475569', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div style={{
+                  fontSize: '10px', color: theme.textMuted, // ✅
+                  marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em',
+                }}>
                   {label}
                 </div>
-                <div style={{ fontSize: '13px', color: '#f1f5f9', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                <div style={{
+                  fontSize: '13px', color: theme.text, // ✅
+                  fontFamily: 'monospace', wordBreak: 'break-all',
+                }}>
                   {value}
                 </div>
               </div>
@@ -88,7 +100,7 @@ export function KycModal({ selected, note, setNote, onClose, onReview }) {
             <>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{
-                  display: 'block', fontSize: '11px', color: '#475569',
+                  display: 'block', fontSize: '11px', color: theme.textMuted, // ✅
                   marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em',
                 }}>
                   ໝາຍເຫດ (ສຳລັບປະຕິເສດ)
@@ -99,10 +111,14 @@ export function KycModal({ selected, note, setNote, onClose, onReview }) {
                   placeholder="ຮູບບໍ່ຊັດ / ຂໍ້ມູນບໍ່ຕົງ..."
                   rows={3}
                   style={{
-                    width: '100%', background: '#0a0a14',
-                    border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px',
-                    padding: '12px 14px', color: '#f1f5f9', fontSize: '13px',
-                    outline: 'none', resize: 'none', boxSizing: 'border-box',
+                    width: '100%',
+                    background:   theme.surface2,        // ✅
+                    border:      `1px solid ${theme.border}`, // ✅
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    color:        theme.text,            // ✅
+                    fontSize: '13px', outline: 'none',
+                    resize: 'none', boxSizing: 'border-box',
                     fontFamily: 'Sora, sans-serif',
                   }}
                 />

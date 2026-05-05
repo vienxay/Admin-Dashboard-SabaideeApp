@@ -1,9 +1,13 @@
 import { useTheme } from '../../context/useTheme'
 
 const TAB_LABEL = { pending: 'ລໍຖ້າ', verified: 'ຜ່ານແລ້ວ', rejected: 'ປະຕິເສດ' }
-const TAB_COLOR = { pending: '#f59e0b', verified: '#00d4aa', rejected: '#ef4444' }
+const TAB_COLOR = {
+  pending:  '#f97316',  // ✅ ສົ້ມ (ຕາມ KycStats)
+  verified: '#0e7a65',  // ✅ ຂຽວເຂັ້ມ
+  rejected: '#b91c1c',  // ✅ ແດງເຂັ້ມ
+}
 
-// ❌ ລຶບ S ທີ່ນອກ component ອອກ
+
 
 export function KycTable({ kycTab, kycList, loading, onRefresh, onSelect }) {
   // ✅ useTheme ຢູ່ໃນ component
@@ -48,8 +52,9 @@ export function KycTable({ kycTab, kycList, loading, onRefresh, onSelect }) {
           </span>
         </div>
         <button onClick={onRefresh} style={{
-          fontSize: '12px', color: '#00d4aa', background: 'rgba(0,212,170,0.08)',
-          border: '1px solid rgba(0,212,170,0.2)', borderRadius: '8px',
+          fontSize: '12px', color: '#ffffff',
+          background: '#468432',
+          border: 'none', borderRadius: '8px',
           padding: '6px 14px', cursor: 'pointer',
         }}>↻ ໂຫລດໃໝ່</button>
       </div>
@@ -79,7 +84,9 @@ export function KycTable({ kycTab, kycList, loading, onRefresh, onSelect }) {
                 onMouseEnter={e => e.currentTarget.style.background = theme.name === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <td style={S.td}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: theme.text }}>{kyc.fullName}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: theme.name === 'light' ? '#111111' : theme.text }}>
+                    {kyc.fullName}
+                  </div>
                   <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '2px' }}>{kyc.email}</div>
                 </td>
                 <td style={{ ...S.td, fontFamily: 'monospace', fontSize: '13px', color: theme.textSub }}>
@@ -90,17 +97,18 @@ export function KycTable({ kycTab, kycList, loading, onRefresh, onSelect }) {
                 <td style={S.td}>
                   <span style={{
                     fontSize: '11px', padding: '4px 10px', borderRadius: '20px', fontWeight: 600,
-                    background: `rgba(${kycTab === 'pending' ? '245,158,11' : kycTab === 'verified' ? '0,212,170' : '239,68,68'},0.1)`,
-                    border: `1px solid ${TAB_COLOR[kycTab]}44`,
-                    color: TAB_COLOR[kycTab],
+                    background: TAB_COLOR[kycTab],           // ✅ solid color
+                    border: 'none',                          // ✅ ລຶບ border
+                    color: '#ffffff',                        // ✅ ຂາວ
                   }}>
                     {TAB_LABEL[kyc.status]}
                   </span>
                 </td>
                 <td style={S.td}>
                   <button onClick={() => onSelect(kyc)} style={{
-                    fontSize: '12px', color: '#00d4aa', background: 'rgba(0,212,170,0.08)',
-                    border: '1px solid rgba(0,212,170,0.2)', borderRadius: '8px',
+                    fontSize: '12px', color: '#ffffff',
+                    background: '#468432',
+                    border: 'none', borderRadius: '8px',
                     padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap',
                   }}>ກວດສອບ →</button>
                 </td>

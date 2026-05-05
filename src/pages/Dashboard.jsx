@@ -6,6 +6,8 @@ import { KycTable }      from '../components/kyc/KycTable'
 import { KycModal }      from '../components/kyc/KycModal'
 import { UsersTable }    from '../components/users/UsersTable'
 import { RatePanel }     from '../components/rate/RatePanel'
+import { ReportPanel }   from '../components/report/ReportPanel'
+import { ProfitReport }  from '../components/report/ProfitReport'
 import { useKyc }        from '../hooks/useKyc'
 import { useUsers }      from '../hooks/useUsers'
 import { useRate }       from '../hooks/useRate'
@@ -30,7 +32,6 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  // ✅ ສະເພາະ users ແລະ rate — KYC ຈັດການໃນ useKyc ແລ້ວ
   useEffect(() => {
     if (mainTab === 'users') fetchUsers()
   }, [mainTab, fetchUsers])
@@ -103,6 +104,14 @@ export default function Dashboard() {
             rate={rate}    stats={stats}
             loading={rateLoading} onRefresh={fetchRate}
           />
+        )}
+
+        {mainTab === 'report' && can.viewRate && (  // ✅
+          <ReportPanel />
+        )}
+
+        {mainTab === 'profit' && can.viewRate && (  // ✅
+          <ProfitReport />
         )}
 
         {!can.viewKYC && !can.viewUsers && !can.viewRate && (

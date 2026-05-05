@@ -33,7 +33,7 @@ export function CreateStaffModal({ onClose, onSuccess }) {
       }}>
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>👤 ສ້າງ Staff ໃໝ່</span>
+          <span style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>👤 ເພີ່ມພະນັກງານໃໝ່</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#475569', fontSize: '20px', cursor: 'pointer' }}>✕</button>
         </div>
 
@@ -72,7 +72,7 @@ export function CreateStaffModal({ onClose, onSuccess }) {
             padding: '13px', borderRadius: '12px', border: 'none',
             cursor: loading ? 'not-allowed' : 'pointer',
           }}>
-            {loading ? 'ກຳລັງສ້າງ...' : '👤 ສ້າງ Staff'}
+            {loading ? 'ກຳລັງສ້າງ...' : '👤 ເພີ່ມພະນັກງານ'}
           </button>
         </form>
       </div>

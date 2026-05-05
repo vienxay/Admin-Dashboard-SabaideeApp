@@ -3,9 +3,9 @@ import { useTheme }      from '../../context/useTheme'
 import { CreateStaffModal } from './CreateStaffModal'
 
 const ROLE_STYLE = {
-  admin: { bg: 'rgba(0,212,170,0.1)',    border: 'rgba(0,212,170,0.3)',   color: '#00d4aa' },
-  staff: { bg: 'rgba(167,139,250,0.1)',  border: 'rgba(167,139,250,0.3)', color: '#a78bfa' },
-  user:  { bg: 'rgba(99,115,150,0.08)',  border: 'rgba(99,115,150,0.2)',  color: '#94a3b8' },
+  admin: { bg: '#0e7a65', color: '#ffffff' },  // ✅ ຂຽວເຂັ້ມ
+  staff: { bg: '#6d28d9', color: '#ffffff' },  // ✅ ມ່ວງເຂັ້ມ
+  user:  { bg: '#475569', color: '#ffffff' },  // ✅ ເທົາເຂັ້ມ
 }
 
 const fmtNum  = (n) => Number(n || 0).toLocaleString()
@@ -72,14 +72,16 @@ export function UsersTable({ users, loading, onRefresh, onRoleChange, onDelete }
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => setShowCreate(true)} style={{
               fontSize: '12px', fontWeight: 600,
-              color: '#a78bfa', background: 'rgba(167,139,250,0.08)',
-              border: '1px solid rgba(167,139,250,0.25)',
+              color: '#ffffff',        // ✅
+              background: '#3852B4',   // ✅
+              border: 'none',          // ✅
               borderRadius: '10px', padding: '8px 16px', cursor: 'pointer',
-            }}>+ ສ້າງ Staff</button>
+            }}>+ ເພີ່ມພະນັກງານ</button>
             <button onClick={onRefresh} style={{
               fontSize: '12px', fontWeight: 600,
-              color: '#00d4aa', background: 'rgba(0,212,170,0.08)',
-              border: '1px solid rgba(0,212,170,0.25)',
+              color: '#ffffff',        // ✅
+              background: '#468432',   // ✅
+              border: 'none',          // ✅
               borderRadius: '10px', padding: '8px 16px', cursor: 'pointer',
             }}>↻ ໂຫລດໃໝ່</button>
           </div>
@@ -131,7 +133,7 @@ export function UsersTable({ users, loading, onRefresh, onRoleChange, onDelete }
                         onChange={e => onRoleChange(u._id, e.target.value)}
                         style={{
                           background:   roleStyle.bg,
-                          border:      `1px solid ${roleStyle.border}`,
+                          border:       'none',          // ✅
                           color:        roleStyle.color,
                           borderRadius: '8px', padding: '5px 10px',
                           fontSize: '12px', fontWeight: 600, cursor: 'pointer',
@@ -147,11 +149,11 @@ export function UsersTable({ users, loading, onRefresh, onRoleChange, onDelete }
                     <td style={S.td}>
                       <span style={{
                         fontSize: '11px', padding: '4px 12px', borderRadius: '20px', fontWeight: 600,
-                        background: u.kycStatus === 'verified'
-                          ? 'rgba(0,212,170,0.1)' : 'rgba(245,158,11,0.1)',
-                        border: `1px solid ${u.kycStatus === 'verified'
-                          ? 'rgba(0,212,170,0.3)' : 'rgba(245,158,11,0.3)'}`,
-                        color: u.kycStatus === 'verified' ? '#00d4aa' : '#f59e0b',
+                        background: u.kycStatus === 'verified' ? '#0e7a65'
+                                  : u.kycStatus === 'rejected' ? '#b91c1c'
+                                  : '#f97316',   // ✅ solid color
+                        border: 'none',          // ✅ ລຶບ border
+                        color: '#ffffff',        // ✅ ຂາວ
                       }}>
                         {u.kycStatus === 'verified' ? '✓ verified' : u.kycStatus || 'pending'}
                       </span>
@@ -176,8 +178,9 @@ export function UsersTable({ users, loading, onRefresh, onRoleChange, onDelete }
                     <td style={S.td}>
                       <button onClick={() => onDelete(u._id, u.name)} style={{
                         fontSize: '12px', fontWeight: 600,
-                        color: '#f87171', background: 'rgba(239,68,68,0.08)',
-                        border: '1px solid rgba(239,68,68,0.2)',
+                        color: '#ffffff',        // ✅
+                        background: '#ef4444',   // ✅
+                        border: 'none',          // ✅
                         borderRadius: '8px', padding: '6px 14px', cursor: 'pointer',
                       }}>🗑 ລຶບ</button>
                     </td>

@@ -3,26 +3,17 @@ import { useTheme } from '../../context/useTheme'
 const TAB_CONFIG = {
   pending: {
     label:  'ລໍຖ້າ',
-    accent: '#f59e0b',
-    light:  'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.2)',
-    glow:   'rgba(245,158,11,0.15)',
+    accent: '#FFA02E',  // ✅ ສີສົ້ມ
     icon:   '⏳',
   },
   verified: {
     label:  'ຜ່ານແລ້ວ',
-    accent: '#00d4aa',
-    light:  'rgba(0,212,170,0.08)',
-    border: 'rgba(0,212,170,0.2)',
-    glow:   'rgba(0,212,170,0.15)',
+    accent: '#0e7a65',
     icon:   '✓',
   },
   rejected: {
     label:  'ປະຕິເສດ',
-    accent: '#ef4444',
-    light:  'rgba(239,68,68,0.08)',
-    border: 'rgba(239,68,68,0.2)',
-    glow:   'rgba(239,68,68,0.15)',
+    accent: '#b91c1c',
     icon:   '✕',
   },
 }
@@ -59,44 +50,28 @@ export function KycStats({ kycTab, setKycTab, count }) {
               cursor:       'pointer',
               transition:   'all 0.2s',
               transform:    'translateY(0)',
-
-              // ✅ Active vs Inactive
-              background: isActive
-                ? theme.name === 'light'
-                  ? cfg.light
-                  : `${cfg.accent}14`
-                : theme.surface,
-
-              border: isActive
-                ? `2px solid ${cfg.accent}55`
-                : `1px solid ${theme.border}`,
-
-              boxShadow: isActive
-                ? theme.name === 'light'
-                  ? `0 4px 20px ${cfg.glow}`
-                  : `0 4px 20px ${cfg.glow}`
-                : theme.name === 'light'
-                  ? '0 2px 8px rgba(99,115,150,0.08)'
-                  : 'none',
+              background:   isActive ? cfg.accent : theme.surface,  // ✅ solid color
+              border:       isActive ? `2px solid ${cfg.accent}` : `1px solid ${theme.border}`,
+              boxShadow:    'none',  // ✅ ລຶບ glow
             }}>
 
-            {/* ✅ Icon + Label Row */}
+            {/* Icon + Label */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '8px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '14px', fontWeight: 700,
-                background: isActive ? `${cfg.accent}22` : `${cfg.accent}11`,
-                color:      cfg.accent,
-                border:    `1px solid ${cfg.accent}33`,
+                background: isActive ? 'rgba(255,255,255,0.2)' : `${cfg.accent}11`,  // ✅
+                color:      isActive ? '#ffffff' : cfg.accent,                        // ✅
+                border:     isActive ? '1px solid rgba(255,255,255,0.3)' : `1px solid ${cfg.accent}33`,
                 transition: 'all 0.2s',
               }}>
                 {cfg.icon}
               </div>
               <span style={{
                 fontSize:   '12px',
-                fontWeight: isActive ? 600 : 400,
-                color:      isActive ? cfg.accent : theme.textMuted,
+                fontWeight: isActive ? 600 : 500,
+                color:      isActive ? '#ffffff' : theme.text,  // ✅
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 transition: 'color 0.2s',
@@ -105,25 +80,24 @@ export function KycStats({ kycTab, setKycTab, count }) {
               </span>
             </div>
 
-            {/* ✅ Count */}
+            {/* Count */}
             <div style={{
               fontSize:   isActive ? '32px' : '28px',
               fontWeight: 700,
-              color:      isActive ? cfg.accent : theme.textMuted,
+              color:      isActive ? '#ffffff' : theme.text,  // ✅
               transition: 'all 0.2s',
               lineHeight: 1,
             }}>
               {isActive ? count : '—'}
             </div>
 
-            {/* ✅ Active indicator bar */}
+            {/* Active bar */}
             {isActive && (
               <div style={{
                 marginTop:    '12px',
                 height:       '3px',
                 borderRadius: '2px',
-                background:   cfg.accent,
-                opacity:      0.6,
+                background:   'rgba(255,255,255,0.5)',  // ✅ ຂາວ
               }} />
             )}
           </div>

@@ -13,9 +13,11 @@ export function Header({ mainTab, setMainTab }) {
   const { mode, theme, toggle } = useTheme()
 
   const TABS = [
-    { key: 'kyc',   label: '📋 KYC',    show: can.viewKYC   },
-    { key: 'users', label: '👥 ຜູ້ໃຊ້', show: can.viewUsers },
-    { key: 'rate',  label: '💱 ອັດຕາ',  show: can.viewRate  },
+    { key: 'kyc',    label: '📋 KYC',     show: can.viewKYC   },
+    { key: 'users',  label: '👥 ຜູ້ໃຊ້',  show: can.viewUsers },
+    { key: 'rate',   label: '💱 ອັດຕາ',   show: can.viewRate  },
+    { key: 'report', label: '📊 ລາຍງານ',  show: can.viewRate  }, // ✅
+    { key: 'profit', label: '💰 ກຳໄລ',    show: can.viewRate  }, // ✅
   ].filter(t => t.show)
 
   const ROLE_COLOR = { admin: '#00d4aa', staff: '#a78bfa' }
@@ -99,28 +101,27 @@ export function Header({ mainTab, setMainTab }) {
 
         {/* Logout */}
         <button
-  onClick={() => { logout(); navigate('/') }}
-  onMouseEnter={() => setHovered(true)}
-  onMouseLeave={() => setHovered(false)}
-  style={{
-    display:      'flex',
-    alignItems:   'center',
-    gap:          '6px',
-    fontSize:     '12px',
-    padding:      '6px 14px',
-    borderRadius: '8px',
-    cursor:       'pointer',
-    transition:   'all 0.2s',
-    // ✅ ປ່ຽນສີຕາມ hover
-    color:      hovered ? '#ef4444' : theme.textSub,
-    border:     `1px solid ${hovered ? '#ef4444' : theme.border}`,
-    background: hovered ? 'rgba(239,68,68,0.08)' : 'transparent',
-  }}
->
-  <LogOut size={14} />
-  ອອກ
-</button>
-
+          onClick={() => { logout(); navigate('/') }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            display:      'flex',
+            alignItems:   'center',
+            gap:          '6px',
+            fontSize:     '12px',
+            padding:      '6px 14px',
+            borderRadius: '8px',
+            cursor:       'pointer',
+            transition:   'all 0.2s',
+            // ✅ ປ່ຽນສີຕາມ hover
+            color:      hovered ? '#ef4444' : theme.textSub,
+            border:     `1px solid ${hovered ? '#ef4444' : theme.border}`,
+            background: hovered ? 'rgba(239,68,68,0.08)' : 'transparent',
+          }}
+        >
+          <LogOut size={14} />
+          ອອກ
+        </button>
       </div>
     </div>
   )

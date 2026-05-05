@@ -88,4 +88,18 @@ export const createStaff   = (name, email, password)      => api.post('/admin/cr
 export const getRate  = () => api.get('/admin/rate')
 export const getStats = () => api.get('/admin/stats')
 
+export const getReport = (from, to, type) =>
+  api.get(`/admin/report?from=${from}&to=${to}&type=${type || 'all'}`)
+
+export const getProfitReport = (from, to) =>
+  api.get(`/admin/report/profit?from=${from}&to=${to}`)
+
+// Expenses
+export const getExpenses   = (year)                           => api.get(`/admin/expenses?year=${year}`)
+export const addExpense    = (data)                           => api.post('/admin/expenses', data)
+export const deleteExpense = (id)                             => api.delete(`/admin/expenses/${id}`)
+
+// Top Users
+export const getTopUsers   = (from, to, limit = 10)          => api.get(`/admin/report/top-users?from=${from}&to=${to}&limit=${limit}`)
+
 export default api
