@@ -8,13 +8,14 @@ export function usePermission() {
 
   // ✅ ສິດການເຂົ້າຖຶງ
   const can = {
-    viewKYC:     isAdmin || isStaff,  // ທັງ 2 ເຫັນ
-    approveKYC:  isAdmin || isStaff,  // ທັງ 2 ອະນຸມັດໄດ້
-    viewUsers:   isAdmin,             // admin ເທົ່ານັ້ນ
-    changeRole:  isAdmin,             // admin ເທົ່ານັ້ນ
-    deleteUser:  isAdmin,             // admin ເທົ່ານັ້ນ
-    viewRate:    isAdmin,             // admin ເທົ່ານັ້ນ
-    viewStats:   isAdmin,             // admin ເທົ່ານັ້ນ
+    viewKYC:     isAdmin || isStaff,
+    approveKYC:  isAdmin || isStaff,
+    viewUsers:   isAdmin,
+    changeRole:  isAdmin,
+    deleteUser:  isAdmin,
+    viewRate:    isAdmin,
+    viewStats:   isAdmin,
+    viewReport:  isAdmin || isStaff,  // ✅ ເພີ່ມ
   }
 
   return { isAdmin, isStaff, can }

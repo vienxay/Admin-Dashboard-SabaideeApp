@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '../../context/useTheme'
-import { getProfitReport, getTopUsers, addExpense, deleteExpense } from '../../services/api'
+import { getProfitReport, addExpense, deleteExpense } from '../../services/api'
 import * as XLSX from 'xlsx'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 const fmtNum = (n) => Number(n || 0).toLocaleString()
+const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB')
+
 const MONTH_TH = ['','ມັງກອນ','ກຸມພາ','ມີນາ','ເມສາ','ພຶດສະພາ','ມິຖຸນາ',
                      'ກໍລະກົດ','ສິງຫາ','ກັນຍາ','ຕຸລາ','ພະຈິກ','ທັນວາ']
 
@@ -24,7 +26,6 @@ export function ProfitReport() {
   const [from,      setFrom]      = useState(sixAgo.toISOString().slice(0, 10))
   const [to,        setTo]        = useState(today.toISOString().slice(0, 10))
   const [data,      setData]      = useState(null)
-  const [topUsers,  setTopUsers]  = useState([])
   const [loading,   setLoading]   = useState(false)
 
   // Expense form
@@ -37,12 +38,8 @@ export function ProfitReport() {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [profitRes, topRes] = await Promise.all([
-        getProfitReport(from, to),
-        getTopUsers(from, to),
-      ])
+      const profitRes = await getProfitReport(from, to)
       setData(profitRes.data.data)
-      setTopUsers(topRes.data.data || [])
     } catch {
       setData(null)
     } finally {
@@ -67,52 +64,55 @@ export function ProfitReport() {
     return Object.values(map)
   })()
 
+  const autoWidth = (ws) => {
+    const cols = []
+    const range = XLSX.utils.decode_range(ws['!ref'])
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      let max = 10
+      for (let R = range.s.r; R <= range.e.r; R++) {
+        const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })]
+        if (cell?.v) max = Math.max(max, String(cell.v).length + 2)
+      }
+      cols.push({ wch: max })
+    }
+    ws['!cols'] = cols
+  }
+
   // ── Export Excel ────────────────────────────────────────────────────────
   const exportExcel = () => {
     if (!data) return
     const wb = XLSX.utils.book_new()
 
-    // Sheet 1: ກຳໄລຕໍ່ເດືອນ
-    const monthData = data.profitByMonth.map(r => ({
-      'ເດືອນ':       MONTH_TH[r._id.month],
-      'ປີ':          r._id.year,
-      'ປະເພດ':       r._id.type,
+    const ws1 = XLSX.utils.json_to_sheet(data.profitByMonth.map(r => ({
+      'ເດືອນ':        MONTH_TH[r._id.month],
+      'ປີ':           r._id.year,
+      'ປະເພດ':        r._id.type,
       'Volume (LAK)': Math.round(r.totalLAK),
-      'ກຳໄລ (LAK)':  r.profitLAK,
-    }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monthData), 'ກຳໄລຕໍ່ເດືອນ')
+      'ກຳໄລ (LAK)':   r.profitLAK,
+    })))
+    autoWidth(ws1)
+    XLSX.utils.book_append_sheet(wb, ws1, 'ກຳໄລຕໍ່ເດືອນ')
 
-    // Sheet 2: ກຳໄລຕໍ່ວັນ
-    const dayData = data.profitByDay.map(r => ({
-      'ວັນທີ':        `${r._id.day}/${r._id.month}/${r._id.year}`,
-      'ປະເພດ':       r._id.type,
-      'ລາຍການ':      r.count,
+    const ws2 = XLSX.utils.json_to_sheet(data.profitByDay.map(r => ({
+      'ວັນທີ':         `${r._id.day}/${r._id.month}/${r._id.year}`,
+      'ປະເພດ':        r._id.type,
+      'ລາຍການ':       r.count,
       'Volume (LAK)': Math.round(r.totalLAK),
-      'ກຳໄລ (LAK)':  r.profitLAK,
-    }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dayData), 'ກຳໄລຕໍ່ວັນ')
+      'ກຳໄລ (LAK)':   r.profitLAK,
+    })))
+    autoWidth(ws2)
+    XLSX.utils.book_append_sheet(wb, ws2, 'ກຳໄລຕໍ່ວັນ')
 
-    // Sheet 3: Top Users
-    const userData = topUsers.map((u, i) => ({
-      'ອັນດັບ':       i + 1,
-      'ຊື່':          u.name,
-      'Email':        u.email,
-      'TopUp (ຄັ້ງ)': u.count,
-      'ລວມ Sats':    u.totalSats,
-      'ລວມ LAK':     Math.round(u.totalLAK),
-    }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(userData), 'Top Users')
-
-    // Sheet 4: ຄ່າໃຊ້ຈ່າຍ
-    const expData = (data.expenses || []).map(e => ({
-      'ລາຍການ':       e.title,
-      'ປະເພດ':        CATEGORY_LABEL[e.category],
-      'ເດືອນ':        MONTH_TH[e.month],
-      'ປີ':           e.year,
-      'ຈຳນວນ (LAK)':  e.amount,
-      'ໝາຍເຫດ':      e.note || '',
-    }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expData), 'ຄ່າໃຊ້ຈ່າຍ')
+    const ws3 = XLSX.utils.json_to_sheet((data.expenses || []).map(e => ({
+      'ລາຍການ':        e.title,
+      'ປະເພດ':         CATEGORY_LABEL[e.category],
+      'ເດືອນ':         MONTH_TH[e.month],
+      'ປີ':            e.year,
+      'ຈຳນວນ (LAK)':   e.amount,
+      'ໝາຍເຫດ':       e.note || '',
+    })))
+    autoWidth(ws3)
+    XLSX.utils.book_append_sheet(wb, ws3, 'ຄ່າໃຊ້ຈ່າຍ')
 
     XLSX.writeFile(wb, `report_${from}_${to}.xlsx`)
   }
@@ -144,12 +144,12 @@ export function ProfitReport() {
     th: {
       padding: '10px 16px', textAlign: 'left', fontSize: '11px',
       color: theme.textMuted, fontWeight: 600, letterSpacing: '0.08em',
-      textTransform: 'uppercase', borderBottom: `1px solid ${theme.border}`,
+      textTransform: 'uppercase', border: `1px solid ${theme.border}`,
       background: theme.surface2,
     },
     td: {
       padding: '12px 16px', fontSize: '13px',
-      borderBottom: `1px solid ${theme.border}`, color: theme.text,
+      border: `1px solid ${theme.border}`, color: theme.text,
     },
     input: {
       background: theme.surface2, border: `1px solid ${theme.border}`,
@@ -166,6 +166,15 @@ export function ProfitReport() {
           #profit-print, #profit-print * { visibility: visible }
           #profit-print { position: absolute; top: 0; left: 0; width: 100% }
           .no-print { display: none !important }
+          .profit-header { display: block !important }
+          .print-only { display: block !important }
+          .no-break { page-break-inside: avoid }
+
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          @page { margin-top: 10mm; size: A4; }
         }
       `}</style>
 
@@ -195,14 +204,27 @@ export function ProfitReport() {
       </div>
 
       <div id="profit-print">
+
+        {/* Print Header */}
+        <div style={{ textAlign: 'center', marginBottom: '24px', display: 'none' }} className="profit-header">
+          <h2 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 700, color: '#111' }}>
+            ລາຍງານກຳໄລ Sabaidee Admin
+          </h2>
+          <p style={{ color: '#555', margin: 0, fontSize: '13px' }}>
+            {fmtDate(from)} — {fmtDate(to)}
+          </p>
+          <div style={{ borderBottom: '2px solid #0e7a65', marginTop: '12px' }} />
+        </div>
+
         {loading ? (
           <div style={{ padding: '60px', textAlign: 'center', color: theme.textMuted }}>ກຳລັງໂຫລດ...</div>
         ) : !data ? (
           <div style={{ padding: '60px', textAlign: 'center', color: theme.textMuted }}>ບໍ່ມີຂໍ້ມູນ</div>
         ) : (
           <>
-            {/* ── Summary Cards ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '16px' }}>
+            {/* ── Summary Cards (ບໍ່ print) ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '16px' }}
+              className="no-print">
               <div style={{ background: '#0e7a65', borderRadius: '14px', padding: '24px', color: '#fff' }}>
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>💰</div>
                 <div style={{ fontSize: '12px', opacity: 0.85 }}>ກຳໄລລວມ (LAK)</div>
@@ -218,26 +240,43 @@ export function ProfitReport() {
                 <div style={{ fontSize: '12px', opacity: 0.85 }}>ຄ່າໃຊ້ຈ່າຍລວມ (LAK)</div>
                 <div style={{ fontSize: '24px', fontWeight: 700, marginTop: '4px' }}>{fmtNum(data.totalExpenseLAK)} ກີບ</div>
               </div>
-              {/* ກຳໄລສຸດທິ */}
-              <div style={{
-                background: data.netProfitLAK >= 0 ? '#0e7a65' : '#b91c1c',
-                borderRadius: '14px', padding: '24px', color: '#fff',
-              }}>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-                  {data.netProfitLAK >= 0 ? '📈' : '📉'}
-                </div>
+              <div style={{ background: data.netProfitLAK >= 0 ? '#f97316' : '#b91c1c', borderRadius: '14px', padding: '24px', color: '#fff' }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>{data.netProfitLAK >= 0 ? '📈' : '📉'}</div>
                 <div style={{ fontSize: '12px', opacity: 0.85 }}>ກຳໄລສຸດທິ (LAK)</div>
                 <div style={{ fontSize: '24px', fontWeight: 700, marginTop: '4px' }}>
                   {data.netProfitLAK >= 0 ? '+' : ''}{fmtNum(data.netProfitLAK)} ກີບ
                 </div>
-                <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px' }}>
-                  ລາຍຮັບ - ຄ່າໃຊ້ຈ່າຍ
-                </div>
+                <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px' }}>ລາຍຮັບ - ຄ່າໃຊ້ຈ່າຍ</div>
               </div>
             </div>
 
-            {/* ── Chart ── */}
-            <div style={{ ...S.card, padding: '20px 24px' }}>
+            {/* ── Summary Print Only ── */}
+            <div className="print-only" style={{ display: 'none', marginBottom: '20px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', border: '1px solid #cbd5e1' }}>ລາຍການ</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right', border: '1px solid #cbd5e1' }}>ຈຳນວນ (LAK)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { label: '💰 ກຳໄລລວມ',   value: '+' + fmtNum(data.totalProfitLAK),                                           color: '#0e7a65' },
+                    { label: '📊 Volume ລວມ', value: fmtNum(Math.round(data.totalVolumeLAK)),                                     color: '#2F2FE4' },
+                    { label: '💸 ຄ່າໃຊ້ຈ່າຍ', value: '-' + fmtNum(data.totalExpenseLAK),                                          color: '#b91c1c' },
+                    { label: '📈 ກຳໄລສຸດທິ',  value: (data.netProfitLAK >= 0 ? '+' : '') + fmtNum(data.netProfitLAK) + ' ກີບ',  color: '#f97316' },
+                  ].map((row, i) => (
+                    <tr key={i}>
+                      <td style={{ padding: '8px 12px', border: '1px solid #cbd5e1', fontWeight: 600 }}>{row.label}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid #cbd5e1', textAlign: 'right', fontWeight: 700, color: row.color }}>{row.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Chart (ບໍ່ print) ── */}
+            <div style={{ ...S.card, padding: '20px 24px' }} className="no-print">
               <div style={{ fontSize: '14px', fontWeight: 700, color: theme.text, marginBottom: '16px' }}>
                 📈 ແນວໂນ້ມລາຍຮັບຕໍ່ເດືອນ
               </div>
@@ -260,7 +299,7 @@ export function ProfitReport() {
             {/* ── ລາຍຮັບ vs ຄ່າໃຊ້ຈ່າຍ ── */}
             <div style={S.card}>
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: theme.text }}>📋 ລາຍຮັບ vs ຄ່າໃຊ້ຈ່າຍ</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: theme.text }}>📋 ລາຍຮັບ - ຄ່າໃຊ້ຈ່າຍ</span>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -271,13 +310,11 @@ export function ProfitReport() {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* ລາຍຮັບ */}
                   <tr>
                     <td style={S.td}>💰 ກຳໄລຈາກ Spread</td>
                     <td style={S.td}><span style={{ background: '#0e7a65', color: '#fff', borderRadius: '20px', padding: '2px 10px', fontSize: '11px' }}>ລາຍຮັບ</span></td>
                     <td style={{ ...S.td, fontWeight: 700, color: '#0e7a65' }}>+{fmtNum(data.totalProfitLAK)}</td>
                   </tr>
-                  {/* ຄ່າໃຊ້ຈ່າຍ */}
                   {(data.expenses || []).map((e, i) => (
                     <tr key={i}>
                       <td style={S.td}>{e.title}</td>
@@ -285,7 +322,6 @@ export function ProfitReport() {
                       <td style={{ ...S.td, fontWeight: 700, color: '#b91c1c' }}>-{fmtNum(e.amount)}</td>
                     </tr>
                   ))}
-                  {/* ກຳໄລສຸດທິ */}
                   <tr style={{ background: theme.surface2 }}>
                     <td colSpan={2} style={{ ...S.td, fontWeight: 700, fontSize: '14px' }}>🏆 ກຳໄລສຸດທິ</td>
                     <td style={{
@@ -353,7 +389,7 @@ export function ProfitReport() {
 
             {/* ── ຄ່າໃຊ້ຈ່າຍທັງໝົດ ── */}
             {data.expenses?.length > 0 && (
-              <div style={S.card}>
+              <div style={S.card} className="no-break">
                 <div style={{ padding: '16px 20px', borderBottom: `1px solid ${theme.border}` }}>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: theme.text }}>💸 ຄ່າໃຊ້ຈ່າຍທັງໝົດ</span>
                 </div>
@@ -390,43 +426,8 @@ export function ProfitReport() {
               </div>
             )}
 
-            {/* ── Top Users ── */}
-            <div style={S.card}>
-              <div style={{ padding: '16px 20px', borderBottom: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: theme.text }}>🏆 Top Users (TopUp ຫຼາຍສຸດ)</span>
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    {['#', 'ຊື່', 'Email', 'TopUp (ຄັ້ງ)', 'ລວມ Sats', 'ລວມ LAK'].map(h => (
-                      <th key={h} style={S.th}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {topUsers.map((u, i) => (
-                    <tr key={i}>
-                      <td style={{ ...S.td, fontWeight: 700, color: i < 3 ? '#f97316' : theme.text }}>
-                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                      </td>
-                      <td style={{ ...S.td, fontWeight: 600 }}>{u.name}</td>
-                      <td style={{ ...S.td, color: theme.textMuted }}>{u.email}</td>
-                      <td style={S.td}>{u.count}</td>
-                      <td style={S.td}>{fmtNum(u.totalSats)}</td>
-                      <td style={{ ...S.td, fontWeight: 700, color: '#0e7a65' }}>{fmtNum(Math.round(u.totalLAK))}</td>
-                    </tr>
-                  ))}
-                  {topUsers.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ ...S.td, textAlign: 'center', color: theme.textMuted }}>ບໍ່ມີຂໍ້ມູນ</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
             {/* ── ກຳໄລຕໍ່ເດືອນ ── */}
-            <div style={S.card}>
+            <div style={S.card} className="no-break">
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${theme.border}` }}>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: theme.text }}>📅 ກຳໄລຕໍ່ເດືອນ</span>
               </div>
@@ -439,44 +440,44 @@ export function ProfitReport() {
                   </tr>
                 </thead>
                 <tbody>
-                    {data.profitByMonth.map((row, i) => {
-                        const pct   = row.totalLAK > 0 ? ((row.profitLAK / row.totalLAK) * 100).toFixed(2) : 0
-                        const isNeg = row.profitLAK < 0
-                        const isZero = row.profitLAK === 0
+                  {data.profitByMonth.map((row, i) => {
+                    const pct   = row.totalLAK > 0 ? ((row.profitLAK / row.totalLAK) * 100).toFixed(2) : 0
+                    const isNeg = row.profitLAK < 0
+                    const isZero = row.profitLAK === 0
 
-                        return (
-                        <tr key={i}>
-                            <td style={S.td}>{MONTH_TH[row._id.month]}</td>
-                            <td style={S.td}>{row._id.year}</td>
-                            <td style={S.td}>
-                            <span style={{
-                                background:
-                                row._id.type === 'topup'    ? '#0e7a65' :
-                                row._id.type === 'withdraw' ? '#b91c1c' :
-                                row._id.type === 'laoQR'   ? '#7c3aed' :
-                                row._id.type === 'payment'  ? '#2F2FE4' : '#475569',
-                                color: '#fff', borderRadius: '20px',
-                                padding: '2px 10px', fontSize: '11px', fontWeight: 600,
-                            }}>
-                                {row._id.type}
-                            </span>
-                            </td>
-                            <td style={S.td}>{fmtNum(Math.round(row.totalLAK))}</td>
-                            <td style={{
-                            ...S.td, fontWeight: 700,
-                            color: isZero ? theme.textMuted : isNeg ? '#b91c1c' : '#0e7a65',
-                            }}>
-                            {isZero ? '0' : `${isNeg ? '-' : '+'}${fmtNum(Math.abs(row.profitLAK))}`}
-                            </td>
-                            <td style={{
-                            ...S.td,
-                            color: isZero ? theme.textMuted : isNeg ? '#b91c1c' : '#0e7a65',
-                            }}>
-                            {isZero ? '0%' : `${isNeg ? '-' : ''}${Math.abs(pct)}%`}
-                            </td>
-                        </tr>
-                        )
-                    })}
+                    return (
+                      <tr key={i}>
+                        <td style={S.td}>{MONTH_TH[row._id.month]}</td>
+                        <td style={S.td}>{row._id.year}</td>
+                        <td style={S.td}>
+                          <span style={{
+                            background:
+                              row._id.type === 'topup'    ? '#0e7a65' :
+                              row._id.type === 'withdraw' ? '#b91c1c' :
+                              row._id.type === 'laoQR'   ? '#f97316' :
+                              row._id.type === 'pay'     ? '#2F2FE4' : '#475569',
+                            color: '#fff', borderRadius: '20px',
+                            padding: '2px 10px', fontSize: '11px', fontWeight: 600,
+                          }}>
+                            {row._id.type}
+                          </span>
+                        </td>
+                        <td style={S.td}>{fmtNum(Math.round(row.totalLAK))}</td>
+                        <td style={{
+                          ...S.td, fontWeight: 700,
+                          color: isZero ? theme.textMuted : isNeg ? '#b91c1c' : '#0e7a65',
+                        }}>
+                          {isZero ? '0' : `${isNeg ? '-' : '+'}${fmtNum(Math.abs(row.profitLAK))}`}
+                        </td>
+                        <td style={{
+                          ...S.td,
+                          color: isZero ? theme.textMuted : isNeg ? '#b91c1c' : '#0e7a65',
+                        }}>
+                          {isZero ? '0%' : `${isNeg ? '-' : ''}${Math.abs(pct)}%`}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

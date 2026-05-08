@@ -106,11 +106,11 @@ export default function Dashboard() {
           />
         )}
 
-        {mainTab === 'report' && can.viewRate && (  // ✅
+        {mainTab === 'report' && can.viewReport && (  
           <ReportPanel />
         )}
 
-        {mainTab === 'profit' && can.viewRate && (  // ✅
+        {mainTab === 'profit' && can.viewReport && (
           <ProfitReport />
         )}
 

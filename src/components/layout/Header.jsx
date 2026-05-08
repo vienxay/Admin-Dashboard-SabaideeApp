@@ -9,16 +9,16 @@ import { useState }      from 'react'
 export function Header({ mainTab, setMainTab }) {
   const { admin, logout }       = useAuth()
   const navigate                = useNavigate()
-  const { can }                 = usePermission()
+  const { can, isAdmin }                 = usePermission()
   const { mode, theme, toggle } = useTheme()
 
   const TABS = [
-    { key: 'kyc',    label: '📋 KYC',     show: can.viewKYC   },
-    { key: 'users',  label: '👥 ຜູ້ໃຊ້',  show: can.viewUsers },
-    { key: 'rate',   label: '💱 ອັດຕາ',   show: can.viewRate  },
-    { key: 'report', label: '📊 ລາຍງານ',  show: can.viewRate  }, // ✅
-    { key: 'profit', label: '💰 ກຳໄລ',    show: can.viewRate  }, // ✅
-  ].filter(t => t.show)
+  { key: 'kyc',    label: '📋 KYC',           show: can.viewKYC    },
+  { key: 'users',  label: '👥 ຜູ້ໃຊ້',        show: can.viewUsers  },
+  { key: 'rate',   label: '💱 ອັດຕາ',         show: can.viewRate   },
+  { key: 'report', label: '📊 ລາຍງານທັງໝົດ',  show: can.viewReport }, // ✅
+  { key: 'profit', label: '💰 ລາຍງານກຳໄລ',   show: isAdmin        }, // ✅ ສະເພາະ admin
+].filter(t => t.show)
 
   const ROLE_COLOR = { admin: '#00d4aa', staff: '#a78bfa' }
   const role = admin?.role || 'staff'
